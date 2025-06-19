@@ -1,0 +1,191 @@
+/* Add these new styles to your src/Profile.css file */
+
+.about-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.edit-icon {
+  color: var(--icon-color);
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.edit-icon:hover {
+  color: var(--accent-green);
+}
+
+/* You can also add these existing styles if they are missing or need updates */
+.profile-container {
+  background-color: #f0f2f5;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.profile-header {
+  background-color: var(--accent-green);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.profile-header a {
+  color: white;
+  display: flex;
+  align-items: center;
+}
+.profile-header-icon {
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.profile-header span {
+  flex-grow: 1;
+}
+.profile-body {
+  flex: 1;
+  overflow-y: auto;
+}
+.profile-pic-section {
+  background-color: white;
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-bottom: 0.5rem;
+}
+.large-profile-pic {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.profile-name {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #111b21;
+}
+.profile-number {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+.profile-card {
+  background-color: white;
+  margin-bottom: 0.5rem;
+  padding: 0 1rem;
+}
+.about-section {
+  padding: 1rem 0;
+}
+.about-title {
+  color: var(--accent-green);
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+.about-status {
+  color: #111b21;
+  font-size: 1rem;
+}
+.profile-option {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f0f2f5;
+  cursor: pointer;
+}
+.profile-option:last-child {
+  border-bottom: none;
+}
+.option-icon {
+  font-size: 1.3rem;
+  color: var(--icon-color);
+  margin-right: 1.5rem;
+}
+.option-value {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.action-card {
+  padding: 0;
+}
+.action-option {
+  display: flex;
+  align-items: center;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.action-option svg {
+  margin-right: 1.5rem;
+  font-size: 1.4rem;
+}
+.block {
+  color: #f15c6d;
+}
+.report {
+  color: #f15c6d;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  margin-left: auto;
+}
+.switch input {
+  display: none;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+}
+.slider.round {
+  border-radius: 34px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: var(--accent-green);
+}
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Yeh styles apni src/Profile.css file mein add karein */
+
+.about-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.edit-icon {
+  color: var(--icon-color);
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.edit-icon:hover {
+  color: var(--accent-green);
+}

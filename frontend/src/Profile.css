@@ -24,6 +24,9 @@
   flex-direction: column;
 }
 .profile-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   background-color: var(--accent-green);
   color: white;
   padding: 1rem;
@@ -213,6 +216,10 @@ input:checked + .slider:before {
     font-size: 0.9rem;
   }
   .profile-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background-color: var(--accent-green);
     font-size: 1rem;
     gap: 1rem;
     padding: 0.7rem;

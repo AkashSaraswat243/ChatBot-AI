@@ -189,3 +189,32 @@ input:checked + .slider:before {
 .edit-icon:hover {
   color: var(--accent-green);
 }
+
+.profile-pic-animate {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.profile-pic-animate:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+@media (max-width: 600px) {
+  .profile-container {
+    padding: 0;
+  }
+  .large-profile-pic {
+    width: 90px;
+    height: 90px;
+  }
+  .profile-name {
+    font-size: 1.1rem;
+  }
+  .profile-number {
+    font-size: 0.9rem;
+  }
+  .profile-header {
+    font-size: 1rem;
+    gap: 1rem;
+    padding: 0.7rem;
+  }
+}

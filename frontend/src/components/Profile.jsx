@@ -9,7 +9,7 @@ import { BsThreeDotsVertical, BsFillChatLeftTextFill } from 'react-icons/bs';
 import { MdBlock } from 'react-icons/md';
 
 // New, permanent, high-quality profile picture
-const nehanshiProfilePic = 'https://i.pinimg.com/564x/49/8d/93/498d933f20d20875b35831517a26244c.jpg';
+const nehanshiProfilePic = process.env.PUBLIC_URL + '/girl-avatar.png';
 
 const Profile = () => {
     const [isMuted, setIsMuted] = useState(false);
@@ -34,7 +34,7 @@ const Profile = () => {
 
             <main className="profile-body">
                 <div className="profile-pic-section">
-                    <img src={nehanshiProfilePic} alt="Nehanshi" className="large-profile-pic" />
+                    <img src={nehanshiProfilePic} alt="Nehanshi" className="large-profile-pic profile-pic-animate" />
                     <h2 className="profile-name">Nehanshi</h2>
                     <p className="profile-number">+91 98765 43210</p>
                 </div>

@@ -30,7 +30,7 @@ const ChatWindow = () => {
   const messagesEndRef = useRef(null);
   const menuRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const [search, setSearch] = useState("");
   const [profileDrawer, setProfileDrawer] = useState(false);
   const [wallpaper, setWallpaper] = useState('pattern');
@@ -39,13 +39,12 @@ const ChatWindow = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const messageSound = useRef(new Audio(process.env.PUBLIC_URL + '/send.mp3'));
   const prevMessagesRef = useRef([]);
-  const [reactions, setReactions] = useState({});
-  const [showReactionPicker, setShowReactionPicker] = useState({});
-  const emojiOptions = ['😀','😁','😂','🤣','😊','😍','😘','😜','🤔','😎','😢','😭','😡','👍','🙏','👏','💯','🔥','❤️','🎉','🥳','😇','😅','😆','😉','😋','😏','😌','😃','😄','😅','😆','😇','😈','😎','😐','😑','😒','😓','😔','😕','😖','😗','😘','😙','😚','😛','😜','😝','😞','😟','😠','😡','😢','😣','😤','😥','😦','😧','😨','😩','😪','😫','😬','😭','😮','😯','😰','😱','😲','😳','😴','😵','😶','😷','😸','😹','😺','😻','😼','😽','😾','😿','🙀','🙈','🙉','🙊','💀','👻','👽','🤖','💩','😺','😸','😹','😻','😼','😽','🙀','😿','😾','👍','👎','👌','✌️','🤞','🤟','🤘','🤙','🖐️','✋','🖖','👋','🤚','🖕','👏','🙌','👐','🤲','🙏','💪','🦾','🦵','🦶','👂','👃','🧠','🦷','🦴','👀','👁️','👅','👄','💋','🩸','🩹','🩺','🦠','🧬','🦠','🧫','🧪','🧴','🧷','🧹','🧺','🧻','🧼','🧽','🧯','🛀','🛁','🛀','🧖','🧗','🧘','🛌','🛏️','🛋️','🚽','🚿','🧴','🧵','🧶','🧷','🧸','🧹','🧺','🧻','🧼','🧽','🧯','🛀','🛁','🛀','🧖','🧗','🧘','🛌','🛏️','🛋️','🚽','🚿'];
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const inputRef = useRef();
   const [showAttachmentPicker, setShowAttachmentPicker] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+
+  const emojiOptions = ['😀','😁','😂','🤣','😊','😍','😘','😜','🤔','😎','😢','😭','😡','��','👏','❤️','🎉'];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -102,7 +101,7 @@ const ChatWindow = () => {
   }, [messages]);
 
   useEffect(() => {
-    setDarkMode(true);
+    setDarkMode(false);
   }, []);
 
   const handleSendMessage = (e) => {
@@ -268,29 +267,13 @@ const ChatWindow = () => {
                 <span>{formatDateSeparator(msg.timestamp)}</span>
               </div>
             )}
-            <div
-                className={`message-row ${msg.sender === "Nehanshi" ? "left" : "right"}`}
-                onMouseEnter={() => setShowReactionPicker(p => ({...p, [msg.id]: true}))}
-                onMouseLeave={() => setShowReactionPicker(p => ({...p, [msg.id]: false}))}
-                onTouchStart={() => setShowReactionPicker(p => ({...p, [msg.id]: true}))}
-                onTouchEnd={() => setTimeout(() => setShowReactionPicker(p => ({...p, [msg.id]: false})), 1200)}
-              >
-                <div className={`message-bubble ${msg.sender === "Nehanshi" ? "nehanshi" : "akash"}`}>
+            <div className={`message-row ${msg.sender === "Nehanshi" ? "left" : "right"}`}>
+              <div className={`message-bubble ${msg.sender === "Nehanshi" ? "nehanshi" : "akash"}`}>
                 <p className="message-text">{msg.text}</p>
                 <div className="message-meta">
-                    <span className="timestamp">{formatTimestamp(msg.timestamp)}</span>
-                    {msg.sender === "Akash" && <MdDoneAll className="read-receipt" />}
-                  </div>
-                  {showReactionPicker[msg.id] && (
-                    <div className={`reaction-picker${darkMode ? ' dark' : ''}`}>
-                      {emojiOptions.map(e => (
-                        <span key={e} className="reaction-emoji" onClick={() => setReactions(r => ({...r, [msg.id]: e}))}>{e}</span>
-                      ))}
-                    </div>
-                  )}
-                  {reactions[msg.id] && (
-                    <div className="bubble-reaction">{reactions[msg.id]}</div>
-                  )}
+                  <span className="timestamp">{formatTimestamp(msg.timestamp)}</span>
+                  {msg.sender === "Akash" && <MdDoneAll className="read-receipt" />}
+                </div>
               </div>
             </div>
           </React.Fragment>

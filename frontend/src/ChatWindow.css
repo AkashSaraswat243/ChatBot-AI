@@ -375,9 +375,12 @@ body {
   border: 1.5px solid rgba(37,211,102,0.13);
 }
 .nehanshi {
-  background: rgba(255,255,255,0.72);
+  background: #fff !important;
   border-radius: 18px 18px 18px 8px;
   border: 1.5px solid rgba(180,200,255,0.13);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 4px 24px rgba(7,94,84,0.10);
 }
 .message-bubble::after {
   content: "";

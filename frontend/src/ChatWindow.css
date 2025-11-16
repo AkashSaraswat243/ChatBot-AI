@@ -110,22 +110,10 @@ body {
 .main-layout.dark .chat-body::-webkit-scrollbar-thumb {
   background: #222d34;
 }
-.main-layout.dark .message-bubble.akash {
-  background: #005c4b;
-  color: #e9edef;
-}
-.main-layout.dark .message-bubble.nehanshi {
-  background: #202c33;
-  color: #e9edef;
-}
+/* NOTE: Dark-mode bubble overrides are provided later (to ensure they take precedence). */
+
 .main-layout.dark .message-bubble::after {
   border-color: transparent !important;
-}
-.main-layout.dark .akash::after {
-  border-color: transparent transparent transparent #005c4b !important;
-}
-.main-layout.dark .nehanshi::after {
-  border-color: transparent #202c33 transparent transparent !important;
 }
 .main-layout.dark .message-meta {
   color: #8696a0;
@@ -300,6 +288,12 @@ body {
   object-fit: cover;
   border: 2px solid #e0e0e0;
 }
+.profile-pic-animate {
+  transition: transform 0.2s;
+}
+.profile-pic-animate:hover {
+  transform: scale(1.03);
+}
 .contact-info {
   flex-grow: 1;
 }
@@ -325,6 +319,7 @@ body {
   color: var(--whatsapp-light-green);
 }
 
+/* Chat body */
 .chat-body {
   flex: 1;
   overflow-y: auto;
@@ -373,19 +368,27 @@ body {
   margin-bottom: 2px;
   transition: background 0.3s, box-shadow 0.3s, border 0.3s;
 }
+
+/* Outgoing bubble (you) - light mode default */
 .akash {
   background: rgba(220, 248, 198, 0.82);
   border-radius: 18px 18px 8px 18px;
   border: 1.5px solid rgba(37,211,102,0.13);
+  color: #0b3f2f;
 }
+
+/* Incoming bubble (their) - light mode default */
 .nehanshi {
-  background: #fff !important;
+  background: #ffffff;
   border-radius: 18px 18px 18px 8px;
   border: 1.5px solid rgba(180,200,255,0.13);
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: 0 4px 24px rgba(7,94,84,0.10);
+  color: #222222;
 }
+
+/* little triangles */
 .message-bubble::after {
   content: "";
   position: absolute;
@@ -404,6 +407,7 @@ body {
   border-width: 8px 8px 0 0;
   border-color: transparent var(--whatsapp-their-msg) transparent transparent;
 }
+
 .message-text {
   font-size: 1rem;
   line-height: 1.5;
@@ -427,7 +431,13 @@ body {
   font-size: 1rem;
   vertical-align: bottom;
 }
+.status-text {
+  font-size: 0.75rem;
+  margin-left: 4px;
+  vertical-align: middle;
+}
 
+/* Typing indicator */
 .typing-bubble {
   padding: 8px 14px;
 }
@@ -874,6 +884,7 @@ body {
   }
 }
 
+/* Wallpaper picker */
 .wallpaper-picker {
   position: absolute;
   bottom: 70px;
@@ -948,6 +959,7 @@ body {
   color: #075e54;
 }
 
+/* Floating new chat button */
 .fab-new-chat {
   display: none;
   position: fixed;
@@ -994,6 +1006,7 @@ body {
   }
 }
 
+/* Reaction picker and emoji/attachment styles */
 .reaction-picker {
   position: absolute;
   bottom: 110%;
@@ -1242,5 +1255,225 @@ button:focus, .fab-new-chat:focus, .sidebar-header-icon:focus, .footer-icon:focu
   .dropdown-item {
     padding: 10px 14px;
     font-size: 0.97rem;
+  }
+}
+
+/* ------------------ Final Dark Mode overrides for message bubbles ------------------ */
+/* Strong, readable colors for dark mode bubbles + triangles */
+
+.main-layout.dark .message-bubble.akash {
+  background: #067852;
+  color: #e8fff5;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: none;
+}
+
+/* Incoming bubble in dark mode: subtle translucent background + light text */
+.main-layout.dark .message-bubble.nehanshi {
+  background: rgba(255,255,255,0.06);
+  color: #e9edef;
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: none;
+}
+
+/* Ensure message text inherits the bubble color */
+.main-layout.dark .message-bubble.nehanshi .message-text,
+.main-layout.dark .message-bubble.akash .message-text {
+  color: inherit;
+}
+
+/* Timestamps/read-receipts more readable in dark mode */
+.main-layout.dark .message-meta { color: rgba(255,255,255,0.55); }
+.main-layout.dark .message-meta .timestamp { color: rgba(255,255,255,0.55); }
+.main-layout.dark .read-receipt { color: rgba(37,211,102,0.95); }
+.main-layout.dark .status-text { color: rgba(255,255,255,0.55); }
+
+/* Little triangle adjustments */
+.main-layout.dark .akash::after {
+  border-color: transparent transparent transparent #067852 !important;
+}
+.main-layout.dark .nehanshi::after {
+  border-color: transparent rgba(255,255,255,0.06) transparent transparent !important;
+}
+
+/* Typing bubble adjustments for dark mode */
+.main-layout.dark .typing-bubble {
+  background: rgba(255,255,255,0.06);
+}
+
+/* Date separator pill in dark mode */
+.main-layout.dark .date-separator span {
+  background: rgba(255,255,255,0.08);
+  color: #e6eef2;
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+
+/* Links inside messages to be visible */
+.main-layout.dark .message-bubble a {
+  color: #9fe7c8;
+  text-decoration: underline;
+}
+
+/* Safety: ensure attachment preview readable in dark mode */
+.main-layout.dark .attachment-preview img { filter: none; }
+.main-layout.dark .attachment-preview span { color: #e9edef; }
+
+/* ---------- Reply / reactions / delete UI ---------- */
+
+/* reply preview above input */
+.reply-preview {
+  background: rgba(0,0,0,0.04);
+  border-left: 3px solid #25d366;
+  padding: 8px 12px;
+  margin: 6px 12px;
+  border-radius: 8px;
+}
+.reply-preview.dark {
+  background: rgba(255,255,255,0.04);
+  border-left-color:#25d366;
+  color:#e9edef;
+}
+.reply-meta {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:0.9rem;
+  color:#333;
+}
+.reply-cancel {
+  border: none;
+  background: transparent;
+  cursor:pointer;
+  font-size:1rem;
+  color:#777;
+}
+.reply-text {
+  font-size:0.95rem;
+  color:#444;
+  margin-top:4px;
+}
+
+/* bubble reply block */
+.bubble-reply {
+  border-left: 3px solid rgba(0,0,0,0.06);
+  padding-left:8px;
+  margin-bottom:8px;
+  color:#666;
+  font-size:0.92rem;
+}
+.bubble-reply-sender {
+  font-weight:600;
+  font-size:0.85rem;
+  color:#075e54;
+}
+.bubble-reply-text {
+  font-size:0.9rem;
+  color:#444;
+}
+
+/* actions on bubble (appear on hover) */
+.bubble-actions {
+  position:absolute;
+  top:6px;
+  right:8px;
+  display:flex;
+  gap:6px;
+  opacity:0;
+  transform: translateY(-6px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+.message-bubble:hover .bubble-actions {
+  opacity:1;
+  transform: translateY(0);
+}
+.action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 6px;
+  border-radius: 6px;
+  color: #667781;
+}
+.action-btn:hover {
+  background: rgba(0,0,0,0.04);
+  color: #075e54;
+}
+.main-layout.dark .action-btn:hover {
+  background: rgba(255,255,255,0.06);
+  color: #25d366;
+}
+
+/* inline reaction picker */
+.reaction-inline-picker {
+  display:flex;
+  gap:6px;
+  margin-top:8px;
+}
+.react-btn {
+  border:none;
+  background:#fff;
+  padding:6px 8px;
+  border-radius:8px;
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+.main-layout.dark .react-btn {
+  background: #232d36;
+  color: #e9edef;
+  box-shadow: none;
+}
+
+/* reaction pills under bubble */
+.bubble-reactions {
+  display:flex;
+  gap:6px;
+  margin-top:8px;
+  flex-wrap:wrap;
+}
+.reaction-pill {
+  background: rgba(0,0,0,0.06);
+  padding:4px 8px;
+  border-radius:12px;
+  font-size:0.9rem;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.main-layout.dark .reaction-pill {
+  background: rgba(255,255,255,0.04);
+  color:#e9edef;
+}
+
+/* deleted message style */
+.message-deleted {
+  font-style: italic;
+  color: #888;
+}
+.main-layout.dark .message-deleted {
+  color: #a0a0a0;
+}
+
+/* reply colors for dark mode */
+.main-layout.dark .reply-preview {
+  background: rgba(255,255,255,0.03);
+  color: #e9edef;
+  border-left-color: #25d366;
+}
+.main-layout.dark .bubble-reply-sender {
+  color: #a6ffd0;
+}
+.main-layout.dark .bubble-reply-text {
+  color: #d6e5e8;
+}
+
+/* small responsiveness tweak */
+@media (max-width: 480px) {
+  .bubble-actions {
+    right: 6px;
+    top: 4px;
+    gap:4px;
   }
 }

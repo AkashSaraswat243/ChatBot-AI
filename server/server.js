@@ -35,7 +35,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Helper function to generate content with fallback models in case of high demand (503s)
 async function generateAIResponse(prompt) {
-    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];
+    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash"];
     let lastError = null;
 
     for (const modelName of modelsToTry) {
@@ -44,7 +44,7 @@ async function generateAIResponse(prompt) {
             const tempModel = genAI.getGenerativeModel({ 
                 model: modelName,
                 generationConfig: {
-                    maxOutputTokens: 50, // Strict token limit for brief messages
+                    maxOutputTokens: 500, // Room for thoughts + message text
                     temperature: 0.85
                 }
             });
@@ -156,9 +156,9 @@ io.on('connection', (socket) => {
     socket.emit('initialHistory', chatHistories);
 
     socket.on('sendMessage', async (messageData) => {
+        const { text, contactId, clientTempId, replyTo } = messageData;
+        const activeContact = contactId || 'nehanshi';
         try {
-            const { text, contactId, clientTempId, replyTo } = messageData;
-            const activeContact = contactId || 'nehanshi';
 
             const userMessage = {
                 id: nextId++,

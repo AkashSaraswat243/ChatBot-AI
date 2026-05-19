@@ -846,7 +846,7 @@ const ChatWindow = () => {
           {/* Typing Indicator with Bouncing Dots */}
           {isAiTyping && (
             <div className="message-row left">
-              <div className={`message-bubble ${activeContactId} typing-bubble`}>
+              <div className="message-bubble nehanshi typing-bubble">
                 <div className="typing-indicator">
                   <span></span>
                   <span></span>

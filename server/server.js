@@ -158,6 +158,7 @@ io.on('connection', (socket) => {
     socket.on('sendMessage', async (messageData) => {
         const { text, contactId, clientTempId, replyTo } = messageData;
         const activeContact = contactId || 'nehanshi';
+        let aiSenderName = 'Nehanshi';
         try {
 
             const userMessage = {
@@ -184,7 +185,7 @@ io.on('connection', (socket) => {
             const chatHistoryForAI = currentHistory.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
 
             let prompt = "";
-            let aiSenderName = "";
+            aiSenderName = "";
 
             if (activeContact === 'rohan') {
                 aiSenderName = 'Rohan';
@@ -265,6 +266,45 @@ Generate Nehanshi's next single brief message as a response. IMPORTANT: Your res
         } catch (error) {
             console.error("Error handling message or calling Gemini API:", error);
             io.to(socket.id).emit('aiTyping', { activeContact, isTyping: false });
+            
+            // Generate a natural, character-specific rate-limit error message
+            let fallbackName = "System";
+            let fallbackText = "⚠️ Connection timeout. Please try sending your message again in a minute.";
+            
+            if (activeContact === 'mom') {
+                fallbackName = 'Mom';
+                fallbackText = "⚠️ Beta, thoda network problem lag raha hai. Ek minute baad try karna. ❤️";
+            } else if (activeContact === 'nehanshi') {
+                fallbackName = 'Nehanshi';
+                fallbackText = "⚠️ Akash, abhi network issue hai thoda. Ek minute baad message karo please! 😊";
+            } else if (activeContact === 'rohan') {
+                fallbackName = 'Rohan';
+                fallbackText = "⚠️ Bro, server lag ho gaya lagta hai. 1 minute baad try kar, stay strong! 💪";
+            } else if (activeContact === 'papa') {
+                fallbackName = 'Papa';
+                fallbackText = "⚠️ Beta thoda signal weak hai. Thodi der baad message karna. 👍";
+            } else if (activeContact === 'boss') {
+                fallbackName = 'Mr. Verma (Boss)';
+                fallbackText = "⚠️ Connection issue. Please resubmit your query in one minute.";
+            } else if (activeContact === 'cse_group') {
+                fallbackName = 'CSE Group';
+                fallbackText = "⚠️ (System: Batch group chat server rate limited. Try in 1 minute.)";
+            } else if (activeContact === 'delivery') {
+                fallbackName = "Domino's Delivery";
+                fallbackText = "⚠️ Service temporarily busy. We will update your order status shortly.";
+            } else if (activeContact === 'support') {
+                fallbackName = 'Support';
+                fallbackText = "⚠️ Gemini API rate limit exceeded. Please wait 1 minute.";
+            }
+            
+            const errorMsg = {
+                id: nextId++,
+                sender: fallbackName,
+                text: fallbackText,
+                timestamp: new Date().toISOString()
+            };
+            chatHistories[activeContact].push(errorMsg);
+            io.to(socket.id).emit('newMessage', { activeContact, message: errorMsg });
         }
     });
 

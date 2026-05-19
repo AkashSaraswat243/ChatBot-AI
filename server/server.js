@@ -13,11 +13,11 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 app.use(cors());
 const server = http.createServer(app);
-const io = new Server(server, { 
-    cors: { 
+const io = new Server(server, {
+    cors: {
         origin: process.env.CORS_ORIGIN || ["http://localhost:3000", "http://localhost:3001"],
         methods: ["GET", "POST"]
-    } 
+    }
 });
 
 // --- AI Examples ko File se Load Karna ---
@@ -32,7 +32,30 @@ try {
 
 // --- Gemini AI Setup ---
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+// Helper function to generate content with fallback models in case of high demand (503s)
+async function generateAIResponse(prompt) {
+    const modelsToTry = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];
+    let lastError = null;
+
+    for (const modelName of modelsToTry) {
+        try {
+            console.log(`Attempting response generation using model: ${modelName}`);
+            const tempModel = genAI.getGenerativeModel({ model: modelName });
+            const result = await tempModel.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text().trim();
+            if (text) {
+                console.log(`Successfully generated response using model: ${modelName}`);
+                return text;
+            }
+        } catch (error) {
+            console.warn(`Model ${modelName} failed/unavailable:`, error.message || error);
+            lastError = error;
+        }
+    }
+    throw lastError || new Error("All models failed to generate content");
+}
 
 // ================== YAHAN BADLAV HAI ==================
 
@@ -52,57 +75,141 @@ const starterMessages = [
 // --- Socket.IO Connection Logic ---
 io.on('connection', (socket) => {
     console.log(`User connected: ${socket.id}. Starting a new chat session.`);
-    
-    // --- Yahan bhi badlav hai ---
 
-    // Step 1: Starter messages ke array se ek random message chunein.
-    const randomIndex = Math.floor(Math.random() * starterMessages.length);
-    const randomStarterText = starterMessages[randomIndex];
-
-    // Step 2: Uss random message ko welcome message ke taur par set karein.
-    const welcomeMessage = {
-        id: 1, 
-        sender: 'Nehanshi',
-        text: randomStarterText, // Yahan random text use kiya hai
-        timestamp: new Date().toISOString()
+    // Initialize separate chat histories for each contact in the active session
+    let chatHistories = {
+        nehanshi: [
+            {
+                id: 1,
+                sender: 'Nehanshi',
+                text: "Hey Akash! Kesa hai? 😊 All good?",
+                timestamp: new Date().toISOString()
+            }
+        ],
+        rohan: [
+            {
+                id: 1,
+                sender: 'Rohan',
+                text: "Yo Akash! Bro today was chest day, solid pump! 💪 Tu aaj gym kyun nahi aaya?",
+                timestamp: new Date().toISOString()
+            }
+        ],
+        mom: [
+            {
+                id: 1,
+                sender: 'Mom',
+                text: "Beta ghar kab aaoge? Aur khana khaya tumne? 🍲",
+                timestamp: new Date().toISOString()
+            }
+        ],
+        support: [
+            {
+                id: 1,
+                sender: 'Support',
+                text: "Hello Akash! I am the automated technical support assistant for your ChatBot app. How can I assist you with your queries today?",
+                timestamp: new Date().toISOString()
+            }
+        ]
     };
-    
-    // Step 3: Har naye connection ki history is welcome message ke saath shuru karein.
-    let messages = [welcomeMessage]; 
+
     let nextId = 2;
 
-    // Step 4: Client ko connect hote hi ye initial message bhejein.
-    socket.emit('initialHistory', messages);
-
-    // ----------------------------
-
+    // Send initial history for all contacts
+    socket.emit('initialHistory', chatHistories);
 
     socket.on('sendMessage', async (messageData) => {
         try {
-            const userMessage = { ...messageData, sender: 'Akash', id: nextId++, timestamp: new Date().toISOString() };
-            messages.push(userMessage);
-            
-            io.to(socket.id).emit('newMessage', userMessage);
-            io.to(socket.id).emit('aiTyping', { isTyping: true });
+            const { text, contactId, clientTempId, replyTo } = messageData;
+            const activeContact = contactId || 'nehanshi';
 
-            const chatHistoryForAI = messages.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
-            
-            const prompt = `You are role-playing as Nehanshi, talking to your best friend Akash Saraswat. Their tone is casual, caring, and they use Hinglish (mix of Hindi and English) and emojis. Learn from the style of these examples:\n---\n${conversationExamples}\n---\nNow, continue the following conversation naturally. \n\nONGOING CHAT HISTORY:\n${chatHistoryForAI}\n\nGenerate Nehanshi's next single message as a response. IMPORTANT: Your response must be ONLY the message text. Do NOT include "Nehanshi:" in your output.`;
+            const userMessage = {
+                id: nextId++,
+                sender: 'Akash',
+                text: text,
+                timestamp: new Date().toISOString(),
+                replyTo: replyTo || null,
+                status: 'sent',
+                clientTempId: clientTempId || null
+            };
 
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const aiText = response.text().trim();
+            if (!chatHistories[activeContact]) {
+                chatHistories[activeContact] = [];
+            }
+            chatHistories[activeContact].push(userMessage);
 
-            const aiMessage = { id: nextId++, sender: 'Nehanshi', text: aiText, timestamp: new Date().toISOString() };
-            messages.push(aiMessage);
+            // Echo the message back to the client immediately (activeContact context)
+            io.to(socket.id).emit('newMessage', { activeContact, message: userMessage });
+            io.to(socket.id).emit('aiTyping', { activeContact, isTyping: true });
 
-            io.to(socket.id).emit('aiTyping', { isTyping: false });
-            io.to(socket.id).emit('newMessage', aiMessage);
+            // Build history context for the generative model
+            const currentHistory = chatHistories[activeContact];
+            const chatHistoryForAI = currentHistory.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
+
+            let prompt = "";
+            let aiSenderName = "";
+
+            if (activeContact === 'rohan') {
+                aiSenderName = 'Rohan';
+                prompt = `You are role-playing as Rohan, Akash's energetic gym bro. Your tone is extremely casual, enthusiastic, and fitness-obsessed. You speak in a mix of Hindi and English (Hinglish), using terms like "bro", "gainz", "workout", "protein", "beast mode", "bodybuilding". Keep your replies punchy, humorous, and motivate Akash to hit the gym.
+ONGOING CHAT HISTORY:
+${chatHistoryForAI}
+
+Generate Rohan's next single message as a response. IMPORTANT: Your response must be ONLY the message text. Do NOT include "Rohan:" in your output.`;
+            } else if (activeContact === 'mom') {
+                aiSenderName = 'Mom';
+                prompt = `You are role-playing as Akash's Mom. Your tone is incredibly loving, protective, warm, and motherly. You speak in conversational Hindi/Hinglish. Ask him if he has eaten, tell him to take care of himself, and end with blessings or motherly affection (like "beta", "khaana kha lena", "khush raho"). Use gentle emojis (😊, ❤️, 😇, 🧿).
+ONGOING CHAT HISTORY:
+${chatHistoryForAI}
+
+Generate Mom's next single message as a response. IMPORTANT: Your response must be ONLY the message text. Do NOT include "Mom:" or "Maa:" in your output.`;
+            } else if (activeContact === 'support') {
+                aiSenderName = 'Support';
+                prompt = `You are role-playing as a polite and professional AI Support Assistant for the ChatBot app. Your tone is helpful, formal, and clear. You speak only in English. Help Akash with any technical issues, questions about model latency, dark mode, or how the app works.
+ONGOING CHAT HISTORY:
+${chatHistoryForAI}
+
+Generate the support assistant's next single response. IMPORTANT: Your response must be ONLY the message text. Do NOT include "Support:" or "Assistant:" in your output.`;
+            } else {
+                // Default is Nehanshi
+                aiSenderName = 'Nehanshi';
+                prompt = `You are role-playing as Nehanshi, talking to your best friend Akash Saraswat. Their tone is casual, caring, and they use Hinglish (mix of Hindi and English) and emojis. Learn from the style of these examples:
+---
+${conversationExamples}
+---
+ONGOING CHAT HISTORY:
+${chatHistoryForAI}
+
+Generate Nehanshi's next single message as a response. IMPORTANT: Your response must be ONLY the message text. Do NOT include "Nehanshi:" in your output.`;
+            }
+
+            // Generate responses using the fast fallback utility
+            const aiText = await generateAIResponse(prompt);
+
+            const aiMessage = {
+                id: nextId++,
+                sender: aiSenderName,
+                text: aiText,
+                timestamp: new Date().toISOString()
+            };
+            chatHistories[activeContact].push(aiMessage);
+
+            io.to(socket.id).emit('aiTyping', { activeContact, isTyping: false });
+            io.to(socket.id).emit('newMessage', { activeContact, message: aiMessage });
 
         } catch (error) {
             console.error("Error handling message or calling Gemini API:", error);
-            io.to(socket.id).emit('aiTyping', { isTyping: false });
+            io.to(socket.id).emit('aiTyping', { activeContact, isTyping: false });
         }
+    });
+
+    socket.on('reactMessage', ({ messageId, emoji }) => {
+        // Echo back connection-level reaction updates
+        io.to(socket.id).emit('reactMessage', { messageId, counts: { [emoji]: 1 } });
+    });
+
+    socket.on('deleteMessage', ({ messageId }) => {
+        // Echo back connection-level message deletions
+        io.to(socket.id).emit('deleteMessage', { messageId, deletedText: 'This message was deleted' });
     });
 
     socket.on('disconnect', () => {

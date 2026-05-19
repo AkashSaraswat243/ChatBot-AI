@@ -149,7 +149,7 @@ const ChatWindow = () => {
   // UI / Inputs
   const [inputText, setInputText] = useState("");
   const [showMenu, setShowMenu] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth <= 900);
   const [darkMode, setDarkMode] = useState(false);
   const [search, setSearch] = useState("");
   const [profileDrawer, setProfileDrawer] = useState(false);
@@ -498,7 +498,10 @@ const ChatWindow = () => {
   /* ---------- SEND MESSAGE HANDLER ---------- */
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (inputText.trim() === "") return;
+    if (inputText.trim() === "") {
+      inputRef.current?.focus();
+      return;
+    }
 
     const tempId = `temp-${Date.now()}`;
     const userMessage = {
@@ -530,6 +533,11 @@ const ChatWindow = () => {
     setInputText("");
     setReplyTo(null);
     setShowEmojiPicker(false);
+    
+    // Retain focus on message submit
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
   };
 
   /* ---------- CORE REACTIONS / DELETIONS ---------- */
@@ -570,6 +578,12 @@ const ChatWindow = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (!isMobile && activeContactId) {
+      inputRef.current?.focus();
+    }
+  }, [activeContactId, isMobile]);
 
   const formatTimestamp = (isoString) => {
     if (!isoString) return "";
@@ -618,7 +632,7 @@ const ChatWindow = () => {
     <div className={`main-layout${darkMode ? ' dark' : ''}`}>
       
       {/* ----------------- SIDEBAR ----------------- */}
-      <aside className={`sidebar${sidebarOpen ? " open" : ""}${isMobile && activeContactId ? ' hide' : ''}`}>
+      <aside className={`sidebar${sidebarOpen ? " open" : ""}`}>
         
         {/* Sidebar Header */}
         <div className="sidebar-header">
@@ -735,9 +749,8 @@ const ChatWindow = () => {
         {/* Chat Header */}
         <header className="chat-header">
           {isMobile && (
-            <IoArrowBack className="header-icon" onClick={() => { setSidebarOpen(true); }} />
+            <IoArrowBack className="header-icon back-arrow-btn" onClick={() => setSidebarOpen(true)} style={{ marginRight: '12px', fontSize: '1.4rem', cursor: 'pointer' }} />
           )}
-          <FaBars className="header-icon hamburger" onClick={() => setSidebarOpen(true)} />
           
           <div className="profile-link" onClick={() => setShowContactInfo(!showContactInfo)}>
             <img src={activeContact.avatar} alt="Profile" className="profile-pic profile-pic-animate" />

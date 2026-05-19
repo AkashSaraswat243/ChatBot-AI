@@ -20,6 +20,7 @@ import {
   BsEmojiSmile,
   BsPaperclip,
   BsFillMicFill,
+  BsMic,
 } from "react-icons/bs";
 import { 
   MdDone, 
@@ -36,7 +37,11 @@ import {
   FaPalette, 
   FaFileImage, 
   FaFileAlt, 
-  FaCamera 
+  FaCamera,
+  FaPlay,
+  FaPause,
+  FaTrash,
+  FaPlus
 } from "react-icons/fa";
 
 const BACKEND_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
@@ -154,10 +159,10 @@ const ChatWindow = () => {
   const [search, setSearch] = useState("");
   const [profileDrawer, setProfileDrawer] = useState(false);
   const [wallpaper, setWallpaper] = useState('pattern');
-  const [showWallpaperPicker, setShowWallpaperPicker] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachmentPicker, setShowAttachmentPicker] = useState(false);
+  const [attachmentMenuMode, setAttachmentMenuMode] = useState("main");
   const [selectedFile, setSelectedFile] = useState(null);
   const [showContactInfo, setShowContactInfo] = useState(false);
 
@@ -165,6 +170,11 @@ const ChatWindow = () => {
   const [replyTo, setReplyTo] = useState(null); 
   const [reactionPickerFor, setReactionPickerFor] = useState(null); 
   const [reactionsMap, setReactionsMap] = useState({}); 
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [voicePlayingId, setVoicePlayingId] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageCaption, setImageCaption] = useState("");
 
   // Status Stories State
   const [viewingStoryContact, setViewingStoryContact] = useState(null); 
@@ -184,6 +194,7 @@ const ChatWindow = () => {
   const messagesEndRef = useRef(null);
   const menuRef = useRef(null);
   const inputRef = useRef();
+  const fileInputRef = useRef(null);
   const prevMessagesLength = useRef({});
   const messageSound = useRef(new Audio(process.env.PUBLIC_URL + '/send.mp3'));
   
@@ -197,6 +208,44 @@ const ChatWindow = () => {
   useEffect(() => {
     activeCallRef.current = activeCall;
   }, [activeCall]);
+
+  useEffect(() => {
+    if (!showAttachmentPicker) {
+      setAttachmentMenuMode("main");
+    }
+  }, [showAttachmentPicker]);
+
+  useEffect(() => {
+    let interval;
+    if (isRecording) {
+      setRecordingTime(0);
+      interval = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = '20px'; // Set base height
+      const scrollHeight = inputRef.current.scrollHeight;
+      if (scrollHeight > 120) {
+        inputRef.current.style.height = '120px';
+        inputRef.current.style.overflowY = 'auto';
+      } else {
+        // Offset padding and border
+        inputRef.current.style.height = `${scrollHeight - 4}px`;
+        inputRef.current.style.overflowY = 'hidden';
+      }
+    }
+  }, [inputText]);
+
+  const formatRecordingTime = (secs) => {
+    const mins = Math.floor(secs / 60);
+    const remaining = secs % 60;
+    return `${mins}:${remaining < 10 ? '0' : ''}${remaining}`;
+  };
 
   // Emojis
   const emojiOptions = ['😀','😁','😂','🤣','😊','😍','😘','😜','🤔','😎','😢','😭','😡','👏','❤️','🎉','💪','🍲','✨','🔥'];
@@ -540,6 +589,89 @@ const ChatWindow = () => {
     }, 10);
   };
 
+  const handleSendVoiceMessage = () => {
+    if (recordingTime < 1) {
+      setIsRecording(false);
+      return;
+    }
+    const tempId = `temp-voice-${Date.now()}`;
+    const userMessage = {
+      id: tempId,
+      sender: "Akash",
+      text: "🎤 Voice message",
+      type: "voice",
+      duration: formatRecordingTime(recordingTime),
+      timestamp: new Date().toISOString(),
+      replyTo: null,
+      status: 'sending',
+      clientTempId: tempId
+    };
+
+    setChatHistories(prev => {
+      const history = prev[activeContactId] || [];
+      return { ...prev, [activeContactId]: [...history, userMessage] };
+    });
+
+    socketRef.current?.emit("sendMessage", {
+      text: "🎤 Sent a voice message (" + formatRecordingTime(recordingTime) + ")",
+      contactId: activeContactId,
+      clientTempId: tempId,
+      replyTo: null
+    });
+
+    simulateReceipts(activeContactId, tempId);
+    setIsRecording(false);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setImagePreview({ file, url });
+      setImageCaption("");
+      setShowAttachmentPicker(false);
+    }
+  };
+
+  const handleSendImageMessage = (e) => {
+    e.preventDefault();
+    if (!imagePreview) return;
+
+    const tempId = `temp-img-${Date.now()}`;
+    const userMessage = {
+      id: tempId,
+      sender: "Akash",
+      text: imageCaption || "Sent an image",
+      type: "image",
+      mediaUrl: imagePreview.url,
+      timestamp: new Date().toISOString(),
+      replyTo: null,
+      status: 'sending',
+      clientTempId: tempId
+    };
+
+    setChatHistories(prev => {
+      const history = prev[activeContactId] || [];
+      return { ...prev, [activeContactId]: [...history, userMessage] };
+    });
+
+    socketRef.current?.emit("sendMessage", {
+      text: imageCaption ? `🖼️ Sent an image with caption: ${imageCaption}` : "🖼️ Sent an image",
+      contactId: activeContactId,
+      clientTempId: tempId,
+      replyTo: null
+    });
+
+    simulateReceipts(activeContactId, tempId);
+
+    setImagePreview(null);
+    setImageCaption("");
+  };
+
+  const handlePlayVoice = (msgId) => {
+    setVoicePlayingId(prev => prev === msgId ? null : msgId);
+  };
+
   /* ---------- CORE REACTIONS / DELETIONS ---------- */
   const toggleReactionPicker = (messageId) => setReactionPickerFor(prev => prev === messageId ? null : messageId);
 
@@ -771,7 +903,7 @@ const ChatWindow = () => {
                   <li className="dropdown-item" onClick={() => { setShowContactInfo(true); setShowMenu(false); }}>Media, links, and docs</li>
                   <li className="dropdown-item" onClick={() => handleFunctionalityAlert("Mute Notifications")}>Mute notifications</li>
                   <li className="dropdown-item" onClick={() => handleFunctionalityAlert("Disappearing messages")}>Disappearing messages</li>
-                  <li className="dropdown-item" onClick={() => setShowWallpaperPicker(true)}>Wallpaper Settings</li>
+                  <li className="dropdown-item" onClick={() => { setShowAttachmentPicker(true); setAttachmentMenuMode("wallpaper"); setShowMenu(false); }}>Wallpaper Settings</li>
                 </ul>
               )}
             </div>
@@ -802,6 +934,56 @@ const ChatWindow = () => {
                   {/* Main Bubble Content */}
                   {msg.deleted ? (
                     <p className="message-deleted">{msg.text || 'This message was deleted'}</p>
+                  ) : msg.type === 'voice' ? (
+                    <div className="voice-message-player">
+                      <button type="button" className="voice-play-btn" onClick={() => handlePlayVoice(msg.id)}>
+                        {voicePlayingId === msg.id ? <FaPause /> : <FaPlay />}
+                      </button>
+                      <div className="voice-wave-progress">
+                        <svg viewBox="0 0 100 20" className="voice-wave-svg">
+                          <rect x="0" y="8" width="2" height="4" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="4" y="5" width="2" height="10" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="8" y="2" width="2" height="16" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="12" y="6" width="2" height="8" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="16" y="4" width="2" height="12" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="20" y="8" width="2" height="4" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="24" y="3" width="2" height="14" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="28" y="6" width="2" height="8" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="32" y="2" width="2" height="16" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="36" y="7" width="2" height="6" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="40" y="4" width="2" height="12" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="44" y="8" width="2" height="4" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="48" y="5" width="2" height="10" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="52" y="2" width="2" height="16" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="56" y="6" width="2" height="8" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="60" y="3" width="2" height="14" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="64" y="8" width="2" height="4" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="68" y="5" width="2" height="10" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="72" y="2" width="2" height="16" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="76" y="6" width="2" height="8" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="80" y="4" width="2" height="12" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="84" y="7" width="2" height="6" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="88" y="3" width="2" height="14" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                          <rect x="92" y="8" width="2" height="4" rx="1" fill={msg.sender === "Akash" ? "#00a884" : "#8696a0"} />
+                        </svg>
+                        <div className="voice-meta-row">
+                          <span className="voice-duration">{msg.duration || '0:05'}</span>
+                        </div>
+                      </div>
+                      <div className="voice-avatar-wrap">
+                        <img 
+                          src={msg.sender === "Akash" ? "https://cdn-icons-png.flaticon.com/512/149/149071.png" : activeContact.avatar} 
+                          alt="avatar" 
+                          className="voice-avatar" 
+                        />
+                        <span className="voice-mic-badge"><BsFillMicFill /></span>
+                      </div>
+                    </div>
+                  ) : msg.type === 'image' || msg.mediaUrl ? (
+                    <div className="bubble-image-message">
+                      <img src={msg.mediaUrl} alt="chat media" className="message-bubble-image" />
+                      {msg.text && msg.text !== "Sent an image" && <p className="message-text caption">{msg.text}</p>}
+                    </div>
                   ) : (
                     <p className="message-text">{msg.text}</p>
                   )}
@@ -859,7 +1041,6 @@ const ChatWindow = () => {
           <div ref={messagesEndRef} />
         </main>
 
-        {/* Input Bar Form */}
         <footer className="chat-footer">
           <form onSubmit={handleSendMessage} className="message-form">
 
@@ -874,93 +1055,202 @@ const ChatWindow = () => {
               </div>
             )}
 
-            <div className="input-area">
-              <BsEmojiSmile
-                className="footer-icon"
-                onClick={() => setShowEmojiPicker(v => !v)}
-                title="Emojis"
-              />
-              
-              {showEmojiPicker && (
-                <div className={`emoji-picker${darkMode ? ' dark' : ''}`}>
-                  {emojiOptions.map((e, i) => (
-                    <span key={i} className="emoji-picker-emoji" onClick={() => {
-                      const el = inputRef.current;
-                      const start = el.selectionStart ?? inputText.length;
-                      const end = el.selectionEnd ?? inputText.length;
-                      setInputText(t => t.slice(0, start) + e + t.slice(end));
-                      setShowEmojiPicker(false);
-                      setTimeout(() => {
-                        el.focus();
-                        el.selectionStart = el.selectionEnd = (start + e.length);
-                      }, 0);
-                    }}>{e}</span>
-                  ))}
+            {/* Image Preview Overlay Card */}
+            {imagePreview && (
+              <div className={`image-upload-preview${darkMode ? ' dark' : ''}`}>
+                <div className="preview-header">
+                  <span>Preview Image</span>
+                  <button type="button" className="close-preview-btn" onClick={() => setImagePreview(null)}>✕</button>
                 </div>
-              )}
-
-              <input
-                type="text"
-                className="chat-input"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Message"
-                autoFocus
-                autoComplete="off"
-                ref={inputRef}
-              />
-
-              <BsPaperclip
-                className="footer-icon attach-icon"
-                onClick={() => setShowAttachmentPicker(v => !v)}
-                title="Attachments"
-              />
-              
-              {showAttachmentPicker && (
-                <div className={`attachment-picker${darkMode ? ' dark' : ''}`}>
-                  <label className="attachment-option" onClick={() => handleFunctionalityAlert("Send Images")}>
-                    <FaFileImage /> Image
-                  </label>
-                  <label className="attachment-option" onClick={() => handleFunctionalityAlert("Send Files")}>
-                    <FaFileAlt /> File
-                  </label>
-                  <label className="attachment-option" onClick={() => handleFunctionalityAlert("Open Camera")}>
-                    <FaCamera /> Camera
-                  </label>
-                </div>
-              )}
-            </div>
-
-            {/* Dynamic Mic to Send button transitions */}
-            <button 
-              type="submit" 
-              className="mic-send-button" 
-              onClick={(e) => { 
-                if (inputText.trim() === "") { 
-                  e.preventDefault(); 
-                  handleFunctionalityAlert("Voice Message Recording"); 
-                } 
-              }}
-            >
-              {inputText.trim() !== "" ? <IoSend /> : <BsFillMicFill />}
-            </button>
-
-            <FaPalette className="footer-icon palette-icon" title="Change wallpaper" onClick={() => setShowWallpaperPicker(v => !v)} />
-            
-            {showWallpaperPicker && (
-              <div className={`wallpaper-picker${darkMode ? ' dark' : ''}`}>
-                <div className={`wallpaper-option${wallpaper==='pattern'?' selected':''}`} onClick={()=>{setWallpaper('pattern');setShowWallpaperPicker(false);}}>
-                  <div className="wallpaper-thumb pattern"></div> Pattern
-                </div>
-                <div className={`wallpaper-option${wallpaper==='solid'?' selected':''}`} onClick={()=>{setWallpaper('solid');setShowWallpaperPicker(false);}}>
-                  <div className="wallpaper-thumb solid"></div> Solid
-                </div>
-                <div className={`wallpaper-option${wallpaper==='gradient'?' selected':''}`} onClick={()=>{setWallpaper('gradient');setShowWallpaperPicker(false);}}>
-                  <div className="wallpaper-thumb gradient"></div> Gradient
+                <div className="preview-body">
+                  <div className="preview-thumbnail-container">
+                    <img src={imagePreview.url} alt="upload preview" className="preview-img-thumbnail" />
+                  </div>
+                  <input 
+                    type="text" 
+                    className="caption-input" 
+                    placeholder="Add a caption..." 
+                    value={imageCaption} 
+                    onChange={(e) => setImageCaption(e.target.value)} 
+                    autoFocus
+                  />
+                  <button type="button" className="send-image-btn" onClick={handleSendImageMessage}>
+                    <IoSend />
+                  </button>
                 </div>
               </div>
             )}
+
+            {isRecording ? (
+              <div className="recording-container">
+                <div className="recording-status">
+                  <span className="recording-dot"></span>
+                  <span className="recording-timer">{formatRecordingTime(recordingTime)}</span>
+                  <div className="recording-wave">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+                <div className="recording-cancel-slide">
+                  Slide to cancel
+                </div>
+                <div className="recording-actions">
+                  <button type="button" className="recording-btn cancel" onClick={() => setIsRecording(false)}>
+                    <FaTrash />
+                  </button>
+                  <button type="button" className="recording-btn send" onClick={handleSendVoiceMessage}>
+                    <IoSend />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="whatsapp-input-capsule">
+                {/* Plus Trigger Button */}
+                <div className="icon-wrapper">
+                  <button 
+                    type="button" 
+                    className="footer-action-btn attach-btn-trigger" 
+                    onClick={() => setShowAttachmentPicker(v => !v)}
+                    title="Attachments"
+                  >
+                    <FaPlus className="footer-icon plus-icon" />
+                  </button>
+                  {showAttachmentPicker && (
+                    <div className={`attachment-picker-whatsapp${darkMode ? ' dark' : ''}`}>
+                      {attachmentMenuMode === "main" ? (
+                        <>
+                          <button 
+                            type="button" 
+                            className="attachment-btn document" 
+                            onClick={() => { setShowAttachmentPicker(false); handleFunctionalityAlert("Send Files"); }} 
+                            title="Document"
+                          >
+                            <FaFileAlt />
+                          </button>
+                          <button 
+                            type="button" 
+                            className="attachment-btn camera" 
+                            onClick={() => { setShowAttachmentPicker(false); handleFunctionalityAlert("Open Camera"); }} 
+                            title="Camera"
+                          >
+                            <FaCamera />
+                          </button>
+                          <button 
+                            type="button" 
+                            className="attachment-btn gallery" 
+                            onClick={() => fileInputRef.current.click()} 
+                            title="Photos & Videos"
+                          >
+                            <FaFileImage />
+                          </button>
+                          <button 
+                            type="button" 
+                            className="attachment-btn wallpaper" 
+                            onClick={() => setAttachmentMenuMode("wallpaper")} 
+                            title="Wallpaper"
+                          >
+                            <FaPalette />
+                          </button>
+                        </>
+                      ) : (
+                        <div className="attachment-wallpaper-submenu">
+                          <button 
+                            type="button" 
+                            className="attachment-submenu-back" 
+                            onClick={() => setAttachmentMenuMode("main")}
+                          >
+                            ← Back
+                          </button>
+                          <div className="wallpaper-menu-options">
+                            <div className="wallpaper-menu-option pattern" onClick={() => { setWallpaper('pattern'); setShowAttachmentPicker(false); }}>
+                              Pattern
+                            </div>
+                            <div className="wallpaper-menu-option solid" onClick={() => { setWallpaper('solid'); setShowAttachmentPicker(false); }}>
+                              Solid
+                            </div>
+                            <div className="wallpaper-menu-option gradient" onClick={() => { setWallpaper('gradient'); setShowAttachmentPicker(false); }}>
+                              Gradient
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Emoji Smile Trigger Button */}
+                <div className="icon-wrapper">
+                  <button 
+                    type="button" 
+                    className="footer-action-btn" 
+                    onClick={() => setShowEmojiPicker(v => !v)}
+                    title="Emojis"
+                  >
+                    <BsEmojiSmile className="footer-icon emoji-icon" />
+                  </button>
+                  {showEmojiPicker && (
+                    <div className={`emoji-picker${darkMode ? ' dark' : ''}`}>
+                      {emojiOptions.map((e, i) => (
+                        <span key={i} className="emoji-picker-emoji" onClick={() => {
+                          const el = inputRef.current;
+                          const start = el.selectionStart ?? inputText.length;
+                          const end = el.selectionEnd ?? inputText.length;
+                          setInputText(t => t.slice(0, start) + e + t.slice(end));
+                          setShowEmojiPicker(false);
+                          setTimeout(() => {
+                            el.focus();
+                            el.selectionStart = el.selectionEnd = (start + e.length);
+                          }, 0);
+                        }}>{e}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Textarea Input area */}
+                <textarea
+                  className="chat-input"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
+                  placeholder="Type a message"
+                  autoFocus
+                  autoComplete="off"
+                  ref={inputRef}
+                  rows={1}
+                />
+
+                {/* Dynamic Mic to Send button transitions */}
+                <button 
+                  type="submit" 
+                  className="footer-send-btn" 
+                  onClick={(e) => { 
+                    if (inputText.trim() === "") { 
+                      e.preventDefault(); 
+                      setIsRecording(true); 
+                    } 
+                  }}
+                >
+                  {inputText.trim() !== "" ? <IoSend className="send-icon active" /> : <BsMic className="send-icon mic-icon" />}
+                </button>
+              </div>
+            )}
           </form>
+          <input 
+            type="file" 
+            accept="image/*" 
+            ref={fileInputRef} 
+            onChange={handleImageChange} 
+            style={{ display: "none" }} 
+          />
         </footer>
       </div>
 

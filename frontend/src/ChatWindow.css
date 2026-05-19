@@ -1227,8 +1227,7 @@ body {
 
 /* Accessibility: Focus/Outline */
 button:focus, .fab-new-chat:focus, .sidebar-header-icon:focus, .footer-icon:focus, .palette-icon:focus, .attachment-option:focus, .wallpaper-option:focus {
-  outline: 2px solid #25d366;
-  outline-offset: 2px;
+  outline: none;
 }
 
 .sidebar-profile-pic {

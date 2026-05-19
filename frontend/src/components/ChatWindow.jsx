@@ -78,6 +78,46 @@ const contactsList = [
     ]
   },
   { 
+    id: 'papa', 
+    name: "Papa 🙏", 
+    avatar: process.env.PUBLIC_URL + '/papa-avatar.png', 
+    lastSeen: "last seen today at 09:15",
+    statusText: "Beta, khana khaya? God bless you. 👍",
+    description: "Family | Father 🙏",
+    stories: [
+      { url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500&h=800&fit=crop&q=80", caption: "Suprabhat beta 🌅" }
+    ]
+  },
+  { 
+    id: 'boss', 
+    name: "Mr. Verma (Boss)", 
+    avatar: process.env.PUBLIC_URL + '/boss-avatar.png', 
+    lastSeen: "online",
+    statusText: "Akash, please share the status of the ChatBot UI development by EOD today.",
+    description: "Work | Office Manager 📁",
+    stories: []
+  },
+  { 
+    id: 'cse_group', 
+    name: "CSE Batch 2026 🎓", 
+    avatar: process.env.PUBLIC_URL + '/group-avatar.png', 
+    lastSeen: "online",
+    statusText: "Group Admin: Guys, mid-term assignment upload deadline is tonight...",
+    description: "Group Chat | College Batchmates 🎓",
+    stories: [
+      { url: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&h=800&fit=crop&q=80", caption: "Mass bunk tomorrow? 😂" }
+    ]
+  },
+  { 
+    id: 'delivery', 
+    name: "Domino's Delivery 🍕", 
+    avatar: process.env.PUBLIC_URL + '/delivery-avatar.png', 
+    lastSeen: "online",
+    statusText: "Thank you for your order! Your pizza is in the oven...",
+    description: "Business Account | Pizza Delivery updates 🍕",
+    stories: []
+  },
+  { 
     id: 'support', 
     name: "ChatBot AI Support", 
     avatar: process.env.PUBLIC_URL + '/support-avatar.png', 
@@ -94,11 +134,15 @@ const ChatWindow = () => {
   // Contact States
   const [activeContactId, setActiveContactId] = useState('nehanshi');
   const [chatHistories, setChatHistories] = useState({});
-  const [typingStates, setTypingStates] = useState({ nehanshi: false, rohan: false, mom: false, support: false });
+  const [typingStates, setTypingStates] = useState({ nehanshi: false, rohan: false, mom: false, papa: false, boss: false, cse_group: false, delivery: false, support: false });
   const [lastSeenTimes, setLastSeenTimes] = useState({
     nehanshi: "online",
     rohan: "last seen today at 18:30",
     mom: "online",
+    papa: "last seen today at 09:15",
+    boss: "online",
+    cse_group: "online",
+    delivery: "online",
     support: "online"
   });
 
@@ -849,6 +893,7 @@ const ChatWindow = () => {
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder="Message"
                 autoFocus
+                autoComplete="off"
                 ref={inputRef}
               />
 

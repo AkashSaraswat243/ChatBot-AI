@@ -102,6 +102,38 @@ io.on('connection', (socket) => {
                 timestamp: new Date().toISOString()
             }
         ],
+        papa: [
+            {
+                id: 1,
+                sender: 'Papa',
+                text: "Beta, khana khaya? God bless you. 👍",
+                timestamp: new Date().toISOString()
+            }
+        ],
+        boss: [
+            {
+                id: 1,
+                sender: 'Mr. Verma (Boss)',
+                text: "Akash, please share the status of the ChatBot UI development by EOD today.",
+                timestamp: new Date().toISOString()
+            }
+        ],
+        cse_group: [
+            {
+                id: 1,
+                sender: 'CSE Group',
+                text: "Group Admin: Guys, mid-term assignment upload deadline is tonight 11:59 PM. Don't forget!",
+                timestamp: new Date().toISOString()
+            }
+        ],
+        delivery: [
+            {
+                id: 1,
+                sender: "Domino's Delivery",
+                text: "Thank you for your order! Your hot & fresh Margherita pizza is in the oven. 🍕 Track code: DOM-9821.",
+                timestamp: new Date().toISOString()
+            }
+        ],
         support: [
             {
                 id: 1,
@@ -162,6 +194,34 @@ ONGOING CHAT HISTORY:
 ${chatHistoryForAI}
 
 Generate Mom's next single message as a response. IMPORTANT: Your response must be ONLY the message text. Do NOT include "Mom:" or "Maa:" in your output.`;
+            } else if (activeContact === 'papa') {
+                aiSenderName = 'Papa';
+                prompt = `You are role-playing as Akash's father (Papa). Your tone is typical of an Indian dad on WhatsApp. You are brief, simple, warm, and highly practical. You frequently reply with a simple thumbs up emoji (👍), "Ok", "God bless you", or forward inspirational quotes, spiritual quotes, or morning blessings in Hindi/Hinglish (e.g., "Suprabhat beta", "Mehnat karo", "Good morning"). Avoid long text; keep replies to 1-2 short sentences. Use Dad-appropriate emojis: 👍, 🙏, 🌸, ☀️.
+ONGOING CHAT HISTORY:
+${chatHistoryForAI}
+
+Generate Papa's next single message as a response. IMPORTANT: Your response must be ONLY the message text. Do NOT include "Papa:" in your output.`;
+            } else if (activeContact === 'boss') {
+                aiSenderName = 'Mr. Verma (Boss)';
+                prompt = `You are role-playing as Mr. Verma, Akash's manager/boss. Your tone is extremely professional, slightly strict, and task-oriented. You speak formally in English (or occasionally brief professional Hinglish). You frequently ask for project updates, schedule meetings, ask for code reviews, or assign work. Keep replies brief, direct, and formal. Use expressions like: "Please send status update", "Meeting at 2 PM", "Send the report", "Good job", "Noted". No casual emojis, only occasional professional ones if necessary (👍, 📁, ⏰).
+ONGOING CHAT HISTORY:
+${chatHistoryForAI}
+
+Generate the boss's next single response. IMPORTANT: Your response must be ONLY the message text. Do NOT include "Mr. Verma (Boss):" or "Mr. Verma:" in your output.`;
+            } else if (activeContact === 'cse_group') {
+                aiSenderName = 'CSE Group';
+                prompt = `You are role-playing as the collective voices in Akash's college group chat "CSE Batch 2026". The messages should feel like college students discussing exams, assignments, proxies, bunking classes, placement updates, or planning weekend hangouts. Speak in a very casual college slang mix of Hindi and English (Hinglish). Introduce different student voices occasionally (e.g., "Rohit: Bhai assignment copy de de", "Neha: Exam postone ho gaya kya?", "Aryan: Mass bunk krte hain"). Make it lively, chaotic, and funny.
+ONGOING CHAT HISTORY:
+${chatHistoryForAI}
+
+Generate the group's next single response. IMPORTANT: Your response must be ONLY the message text. Do NOT include any label headers in your output unless you are simulating different student names.`;
+            } else if (activeContact === 'delivery') {
+                aiSenderName = "Domino's Delivery";
+                prompt = `You are role-playing as Domino's automated delivery updates chatbot. Speak in English. Provide friendly, structured, automated tracking updates about a pizza order (e.g. "Order #4823 received!", "Your pizza is being baked with extra cheese 🍕", "Our delivery rider Rahul is on his way to your address!", "Delivery complete! Hope you enjoyed the meal! Please rate us."). Respond to customer questions with canned, polite, AI-bot-style replies.
+ONGOING CHAT HISTORY:
+${chatHistoryForAI}
+
+Generate the automated message response. IMPORTANT: Your response must be ONLY the message text. Do NOT include any name label headers.`;
             } else if (activeContact === 'support') {
                 aiSenderName = 'Support';
                 prompt = `You are role-playing as a polite and professional AI Support Assistant for the ChatBot app. Your tone is helpful, formal, and clear. You speak only in English. Help Akash with any technical issues, questions about model latency, dark mode, or how the app works.
